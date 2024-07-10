@@ -90,6 +90,7 @@ jobs:
     environment: release
     permissions:
       id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Set release env
@@ -118,12 +119,10 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.release_output.outputs.VERSION }}
+          name: Release ${{ steps.release_output.outputs.VERSION }}
           body: ${{ steps.release_output.outputs.BODY }}
           draft: false
           prerelease: ${{ contains(steps.release_output.outputs.VERSION, 'rc') || contains(steps.release_output.outputs.VERSION, 'b') || contains(steps.release_output.outputs.VERSION, 'a') }}

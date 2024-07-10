@@ -17,18 +17,14 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/python-versions/blob/main/versions-manifest.json
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13.0-beta.3"]
+        python-version: [3.9, "3.10", "3.11", "3.12", "3.13.0-beta.3"]
         django-version:
           - "Django>=4.2,<5.0"
           - "Django>=5.0,<5.1"
           - "Django==5.1b1"
         exclude:
           - django-version: "Django>=5.0,<5.1"
-            python-version: 3.8
-          - django-version: "Django>=5.0,<5.1"
             python-version: 3.9
-          - django-version: "Django==5.1b1"
-            python-version: 3.8
           - django-version: "Django==5.1b1"
             python-version: 3.9
     steps:

@@ -97,6 +97,10 @@ addopts = "-p no:doctest --cov=jemail --cov-branch --ds=tests.settings"
 django_find_project = false
 pythonpath = "."
 
+filterwarnings = [
+  "ignore:CheckConstraint.check is deprecated.*",
+]
+
 [tool.pyright]
 include = ["src", "tests"]
 
@@ -123,3 +127,19 @@ disallow_untyped_defs = false
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+  "def __repr__",
+  "if TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:",
+  "if settings.DEBUG:",
+  "if settings.CI:",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  'class .*\\bProtocol\):',
+  "@(abc\\.)?abstractmethod",
+]

@@ -11,17 +11,18 @@ from anymail.signals import EventType
 from django.conf import settings as django_settings
 from django.core.files.base import ContentFile
 from django.core.mail.message import EmailMultiAlternatives
+from django.core.validators import EmailValidator
 from django.db import models, transaction
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 from . import settings
 
-logger = logging.getLogger(__name__)
-jemail_message_status_update = django.dispatch.Signal()
-
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+logger = logging.getLogger(__name__)
+jemail_message_status_update = django.dispatch.Signal()
 
 
 class EmailRecipientKind(models.IntegerChoices):
@@ -55,8 +56,12 @@ class EmailAttachment(models.Model):
     mimetype = models.CharField(_("MIME type"), max_length=128)
 
 
-def _normalize_email_list(addrs: Sequence[str], seen: Sequence[str]) -> list[str]:
+def _normalize_email_list(
+    addrs: Sequence[str] | None, seen: Sequence[str]
+) -> list[str]:
     result: list[str] = []
+    if addrs is None:
+        return result
     for addr in addrs:
         laddr = addr.lower()
         if laddr not in result and laddr not in seen:
@@ -70,8 +75,8 @@ def _fix_email_recipient_duplication(
     bcc: Sequence[str] | None = None,
 ) -> tuple[list[str], list[str], list[str]]:
     to = _normalize_email_list(to, [])
-    cc = _normalize_email_list(cc or [], to)
-    bcc = _normalize_email_list(bcc or [], to + (cc or []))
+    cc = _normalize_email_list(cc, to)
+    bcc = _normalize_email_list(bcc, to + cc)
     return to, cc, bcc
 
 
@@ -93,22 +98,28 @@ class EmailMessageQuerySet(models.QuerySet["EmailMessage"]):
 class EmailMessageManager(models.Manager["EmailMessage"]):
     def create_with_objects(
         self,
-        from_email: str,
+        *,
         to: Sequence[str],
-        subject: str,
-        body: str,
+        subject: str = "",
+        from_email: str = django_settings.DEFAULT_FROM_EMAIL,
+        body: str = "",
         html_message: str | None = None,
         cc: Sequence[str] | None = None,
         bcc: Sequence[str] | None = None,
         attachments: Sequence[EmailAttachment] | None = None,
-        reply_to: str | None = None,
+        reply_to: Sequence[str] | None = None,
+        created_by_id: Any = None,
     ) -> EmailMessage:
+        if isinstance(to, str):
+            raise TypeError('"to" argument must be a list or tuple')
+        if isinstance(cc, str):
+            raise TypeError('"cc" argument must be a list or tuple')
+        if isinstance(bcc, str):
+            raise TypeError('"bcc" argument must be a list or tuple')
+        if isinstance(reply_to, str):
+            raise TypeError('"reply_to" argument must be a list or tuple')
+
         to, cc, bcc = _fix_email_recipient_duplication(to, cc, bcc)
-        from_email_name, from_email = email.utils.getaddresses([from_email])[0]
-        if reply_to:
-            reply_to_name, reply_to = email.utils.getaddresses([reply_to])[0]
-        else:
-            reply_to_name = reply_to = ""
         # optimization to generate html_message path and pass it to create
         html_message_path = ""
         if html_message is not None:
@@ -119,12 +130,11 @@ class EmailMessageManager(models.Manager["EmailMessage"]):
             html_message_path = _em.html_message.name
         message = super().create(
             from_email=from_email,
-            from_email_name=from_email_name,
             subject=subject,
             body=body,
             reply_to=reply_to,
-            reply_to_name=reply_to_name,
             html_message=html_message_path,
+            created_by_id=created_by_id,
         )
         # fmt: off
         EmailRecipient.objects.bulk_create(
@@ -163,6 +173,20 @@ class JemailMessage(AnymailMessageMixin, EmailMultiAlternatives):
         return result
 
 
+class MailboxValidator(EmailValidator):
+    def __call__(self, value: Any) -> None:
+        _, address = email.utils.parseaddr(value)
+        super().__call__(address)
+
+
+class MailboxField(models.EmailField):
+    default_validators = [MailboxValidator()]
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        kwargs.setdefault("max_length", 256)
+        super().__init__(*args, **kwargs)
+
+
 class EmailMessage(models.Model):
     recipients: models.Manager[EmailRecipient]
 
@@ -174,10 +198,8 @@ class EmailMessage(models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
-    from_email = models.EmailField(_("from email"))
-    from_email_name = models.CharField(_("from email name"), max_length=128)
-    reply_to = models.EmailField(_("reply-to email"), blank=True)
-    reply_to_name = models.CharField(_("reply-to name"), blank=True, max_length=128)
+    from_email = MailboxField(_("from email"))
+    reply_to = models.JSONField(_("reply-to email"), null=True, blank=True)
     subject = models.TextField(_("email subject"))
     body = models.TextField(_("email text"), blank=True)
     attachments: models.ManyToManyField[EmailAttachment, EmailMessageAttachment] = (
@@ -210,7 +232,11 @@ class EmailMessage(models.Model):
             (a.filename, a.file.file.read(), a.mimetype) for a in _attachments
         ]
         if hint_html_message is None:
-            html_message = self.html_message.read().decode("utf-8")
+            if self.html_message.name:
+                self.html_message.seek(0)
+                html_message = self.html_message.read().decode("utf-8")
+            else:
+                html_message = ""
         elif isinstance(hint_html_message, str):
             html_message = hint_html_message
         elif isinstance(hint_html_message, bytes):
@@ -219,7 +245,7 @@ class EmailMessage(models.Model):
             raise ValueError(
                 f"Type {type(hint_html_message)} is not supported for `hint_html_message`."
             )
-        body = self.body or html2text.html2text(html_message)
+        body = self.body or (html_message and html2text.html2text(html_message))
         to: list[str] = []
         cc: list[str] = []
         bcc: list[str] = []
@@ -230,18 +256,18 @@ class EmailMessage(models.Model):
                 cc.append(r.address)
             elif r.kind == EmailRecipientKind.BCC:
                 bcc.append(r.address)
+            else:
+                raise NotImplementedError(f"Unknown recipient kind: {r.kind}")
         msg = JemailMessage(
             dbmessage=self,
             subject=self.subject,
             body=body,
-            from_email=email.utils.formataddr((self.from_email_name, self.from_email)),
+            from_email=self.from_email,
             to=to,
             cc=cc,
             bcc=bcc,
             attachments=attachments,
-            reply_to=[email.utils.formataddr((self.reply_to_name, self.reply_to))]
-            if self.reply_to
-            else None,
+            reply_to=self.reply_to,
         )
         if html_message:
             msg.attach_alternative(html_message, "text/html")

@@ -33,22 +33,30 @@ JEMAIL = {
 from jemail import EmailMessage, EmailAttachment
 
 # save email in db
-message = EmailMessage.objects.create_with_objects(
-    from_email='no-reply@example.com',
-    to=['user@example.com'],
-    subject='Subject',
-    body='Hi User,...',
-    html_message='<p>Hi User...',
-    cc=['cc@example.com'],
-    reply_to='support@example.com',
-    attachments=[EmailAttachment.objects.create(
-        filename='doc.pdf',
-        mimetype='application/pdf',
-        file=ContentFile(b'...', name='doc.pdf')
-    )],
+EmailMessage.objects.create_with_objects(
+    to=["user@example.com"],
+    subject="Subject",
+    # if body not provided it derived from html_message
+    # using html2text library
+    body="Hi User,...",
+    html_message="<p>Hi User...",
+    # the rest is optional
+    from_email="no-reply@example.com",
+    cc=["cc@example.com"],
+    bcc=["bcc@example.com"],
+    attachments=[
+        EmailAttachment.objects.create(
+            filename="doc.pdf",
+            mimetype="application/pdf",
+            file=ContentFile(b"...", name="doc.pdf"),
+        )
+    ],
+    reply_to=["Example Team <support@example.com>"],
+    created_by_id=user.pk,
+)
 
 # build EmailMultiAlternatives from db
-msg = message.build_message()
+msg = EmailMessage.objects.get(pk=pk).build_message()
 # send email
 msg.send()
 )

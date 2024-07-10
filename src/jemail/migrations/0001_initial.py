@@ -5,6 +5,7 @@ import django.db.models.functions.text
 from django.conf import settings
 from django.db import migrations, models
 
+import jemail.models
 import jemail.settings
 
 
@@ -75,22 +76,14 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "from_email",
-                    models.EmailField(max_length=254, verbose_name="from email"),
-                ),
-                (
-                    "from_email_name",
-                    models.CharField(max_length=128, verbose_name="from email name"),
-                ),
-                (
-                    "reply_to",
-                    models.EmailField(
-                        blank=True, max_length=254, verbose_name="reply-to email"
+                    jemail.models.MailboxField(
+                        max_length=256, verbose_name="from email"
                     ),
                 ),
                 (
-                    "reply_to_name",
-                    models.CharField(
-                        blank=True, max_length=128, verbose_name="reply-to name"
+                    "reply_to",
+                    models.JSONField(
+                        blank=True, null=True, verbose_name="reply-to email"
                     ),
                 ),
                 ("subject", models.TextField(verbose_name="email subject")),

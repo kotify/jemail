@@ -1,0 +1,125 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jemail"
+dynamic = ["version"]
+description = "Django app to store emails in db"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "Konstantin Alekseev", email = "mail@kalekseev.com" },
+]
+keywords = [
+    "email",
+    "django",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+dependencies = [
+    "django>=4.2",
+    "django-anymail",
+    "html2text",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "django-stubs",
+    "mypy",
+    "pdbpp",
+    "pre-commit",
+    "ruff",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-django",
+]
+
+[project.urls]
+Repository = "https://github.com/kotify/jemail"
+Changelog = "https://github.com/kotify/jemail/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+source = "vcs"
+raw-options = { local_scheme = "no-local-version" }
+
+[tool.hatch.build.targets.sdist]
+include = ["/src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/jemail"]
+
+[tool.ruff]
+src = ["src"]
+target-version = "py38"
+[tool.ruff.lint]
+select = [
+  'B',
+  'C',
+  'E',
+  'F',
+  'N',
+  'W',
+  'UP',
+  'RUF',
+  'INP',
+  'I',
+  'TCH',
+]
+ignore = [
+  'E501',
+  'B904',
+  'B905',
+  'RUF012',
+]
+extend-safe-fixes = ["TCH"]
+
+[tool.pytest.ini_options]
+addopts = "-p no:doctest --cov=jemail --cov-branch --ds=tests.settings"
+django_find_project = false
+pythonpath = "."
+
+[tool.pyright]
+include = ["src", "tests"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+
+disallow_untyped_defs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+implicit_reexport = true
+strict_equality = true
+warn_unreachable = true
+show_error_codes = true
+
+no_implicit_optional = true
+strict_optional = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.django-stubs]
+django_settings_module = "tests.settings"

@@ -168,7 +168,7 @@ class JemailMessage(AnymailMessageMixin, EmailMultiAlternatives):
         )
         for address, status in statuses.items():
             recipients[address].status = status.status
-            recipients[address].provider_id = status.message_id
+            recipients[address].provider_id = status.message_id or ""
         EmailRecipient.objects.filter(status="").bulk_update(
             recipients.values(), fields=["status", "provider_id"]
         )

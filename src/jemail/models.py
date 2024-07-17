@@ -419,7 +419,7 @@ def process_mail_event(anymail_event: TrackingEventProtocol) -> None:
                 .select_for_update()
                 .get()
             )
-        except EmailRecipient.DoesNotExist:
+        except (EmailRecipient.DoesNotExist, ValueError):
             logger.warning(
                 f"Email reciepient for tracking event not found. {settings.METADATA_ID_KEY}: {message_id}, email: {address}"
             )

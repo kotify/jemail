@@ -59,7 +59,6 @@ EmailMessage.objects.create_with_objects(
 msg = EmailMessage.objects.get(pk=pk).build_message()
 # send email
 msg.send()
-)
 ```
 
 ## Development

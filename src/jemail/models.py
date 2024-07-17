@@ -14,6 +14,7 @@ from django.core.mail.message import EmailMultiAlternatives
 from django.core.validators import EmailValidator
 from django.db import models, transaction
 from django.db.models.functions import Lower
+from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 
 from . import settings
@@ -125,7 +126,9 @@ class EmailMessageManager(models.Manager["EmailMessage"]):
         if html_message is not None:
             _em = EmailMessage()
             _em.html_message.save(
-                "body.html", ContentFile(html_message.encode("utf-8")), save=False
+                f"body_{get_random_string(8)}.html",  # random prevents file overwrite
+                ContentFile(html_message.encode("utf-8")),
+                save=False,
             )
             html_message_path = _em.html_message.name
         message = super().create(
@@ -161,14 +164,13 @@ class JemailMessage(AnymailMessageMixin, EmailMultiAlternatives):
             return result
         recipients = {r.address: r for r in self.dbmessage.recipients.all()}
         statuses = cast(
-            dict[str, AnymailRecipientStatus],
-            self.anymail_status.recipients,
+            dict[str, AnymailRecipientStatus], self.anymail_status.recipients
         )
         for address, status in statuses.items():
             recipients[address].status = status.status
             recipients[address].provider_id = status.message_id
         EmailRecipient.objects.filter(status="").bulk_update(
-            recipients.values(), fields=["status", "message_id"]
+            recipients.values(), fields=["status", "provider_id"]
         )
         return result
 
@@ -352,20 +354,15 @@ class EmailRecipient(models.Model):
 
 
 def is_webhook_event_supported(anymail_event: TrackingEventProtocol) -> bool:
-    return (
-        anymail_event.event_type
-        in [
-            EventType.BOUNCED,
-            EventType.DEFERRED,
-            EventType.DELIVERED,
-            EventType.REJECTED,
-            EventType.QUEUED,
-            EventType.CLICKED,
-            EventType.OPENED,
-        ]
-        # Email belongs to MagiLoop.
-        and bool(anymail_event.metadata.get(settings.METADATA_ID_KEY))
-    )
+    return anymail_event.event_type in [
+        EventType.BOUNCED,
+        EventType.DEFERRED,
+        EventType.DELIVERED,
+        EventType.REJECTED,
+        EventType.QUEUED,
+        EventType.CLICKED,
+        EventType.OPENED,
+    ] and bool(anymail_event.metadata.get(settings.METADATA_ID_KEY))
 
 
 # Delivery status allowed transitions.

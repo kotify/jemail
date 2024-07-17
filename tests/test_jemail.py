@@ -205,13 +205,13 @@ def test_handle_sendgrid_events(db):
         {
             "email": email,
             jemail.settings.METADATA_ID_KEY: str(em.pk),
-            "event": "delivered",
+            "event": EventType.DELIVERED,
             "timestamp": 1,
         },
         {
             "email": email,
             jemail.settings.METADATA_ID_KEY: str(em.pk),
-            "event": "processed",
+            "event": EventType.QUEUED,
             "timestamp": 1,
         },
     ]

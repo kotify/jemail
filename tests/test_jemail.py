@@ -95,7 +95,10 @@ def test_fill_from_anymail_event_tracking_not_exist():
     anymail_event = AnymailTrackingEvent(
         event_type=EventType.BOUNCED,
         timestamp=from_utc_timestamp(1),
-        esp_event={"data": "abc"},
+        esp_event={
+            "data": "abc",
+            "sg_message_id": "6b0f6f28-515d-4658-ae1e-d5d13fee2fc4",
+        },
         recipient="test@example.com",
     )
     recipient = EmailRecipient(timestamp=None)
@@ -105,6 +108,7 @@ def test_fill_from_anymail_event_tracking_not_exist():
     assert recipient.timestamp.timestamp() == 1
     assert recipient.clicks_count == 0
     assert recipient.opens_count == 0
+    assert recipient.provider_id == "6b0f6f28-515d-4658-ae1e-d5d13fee2fc4"
 
 
 def test_fill_from_anymail_event_old_event():

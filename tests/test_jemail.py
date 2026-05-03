@@ -18,7 +18,7 @@ from jemail.models import (
 
 
 def from_utc_timestamp(timestamp):
-    return dt.datetime.fromtimestamp(timestamp, tz=dt.timezone.utc)
+    return dt.datetime.fromtimestamp(timestamp, tz=dt.UTC)
 
 
 @pytest.fixture(autouse=True)

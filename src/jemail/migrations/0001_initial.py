@@ -234,7 +234,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="emailrecipient",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("address", django.db.models.functions.text.Lower("address"))
                 ),
                 name="jemail_address_in_lowercase",

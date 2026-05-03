@@ -123,7 +123,7 @@ class EmailMessageManager(models.Manager["EmailMessage"]):
 
         to, cc, bcc = _fix_email_recipient_duplication(to, cc, bcc)
         # optimization to generate html_message path and pass it to create
-        html_message_path = ""
+        html_message_path: str | None = ""
         if html_message is not None:
             _em = EmailMessage()
             _em.html_message.save(
@@ -165,7 +165,7 @@ class JemailMessage(AnymailMessageMixin, EmailMultiAlternatives):
             return result
         recipients = {r.address: r for r in self.dbmessage.recipients.all()}
         statuses = cast(
-            dict[str, AnymailRecipientStatus], self.anymail_status.recipients
+            "dict[str, AnymailRecipientStatus]", self.anymail_status.recipients
         )
         for address, status in statuses.items():
             recipients[address].status = status.status
@@ -313,7 +313,7 @@ class EmailRecipient(models.Model):
                 name="jemail_message_has_unique_recipients",
             ),
             models.CheckConstraint(
-                check=models.Q(address=Lower("address")),
+                condition=models.Q(address=Lower("address")),
                 name="jemail_address_in_lowercase",
             ),
         ]
@@ -358,7 +358,7 @@ class EmailRecipient(models.Model):
             # generate custom id thus `provider_id` will be empty.
             # Write message id from webhook payload `sg_message_id`.
             if "sg_message_id" in anymail_event.esp_event:
-                self.provider_id = anymail_event.esp_event["sg_message_id"]
+                self.provider_id = anymail_event.esp_event["sg_message_id"]  # ty: ignore[invalid-argument-type]
 
 
 def is_webhook_event_supported(anymail_event: TrackingEventProtocol) -> bool:

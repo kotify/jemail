@@ -48,6 +48,7 @@ def test_create_with_objects(db, mailoutbox):
     assert em.subject == "Subject"
     assert em.body == "Hi User,..."
     assert em.html_message.read() == b"<p>Hi User..."
+    assert em.html_message.name is not None
     assert em.html_message.name.startswith("emails/messages/body")
     assert em.reply_to == ["Example Team <support@example.com>"]
     assert em.created_by == user

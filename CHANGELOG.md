@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+### 0.1b3
+
 - Support Django 6.1
 - Add `using` to `JemailMessage.send()` to select a Django 6.1 mailer
 

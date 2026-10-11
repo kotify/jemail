@@ -2,7 +2,10 @@
 
 ### Unreleased
 
+### 0.1b2
+
 - Type `EmailMessage.recipients` as a related manager
+- Remove Python 3.10 and 3.11 classifiers
 
 ### 0.1b1
 

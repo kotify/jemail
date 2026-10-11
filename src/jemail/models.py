@@ -354,13 +354,16 @@ class EmailRecipient(models.Model):
                 self.clicks_count += 1
             if anymail_event.event_type == EventType.OPENED:
                 self.opens_count += 1
-        if self.provider_id == "" and isinstance(anymail_event.esp_event, dict):
-            # Sendgrid doesn't return message id in response to send request
-            # if SENDGRID_GENERATE_MESSAGE_ID = false then anymail won't
-            # generate custom id thus `provider_id` will be empty.
-            # Write message id from webhook payload `sg_message_id`.
-            if "sg_message_id" in anymail_event.esp_event:
-                self.provider_id = anymail_event.esp_event["sg_message_id"]  # ty: ignore[invalid-argument-type]
+        # Sendgrid doesn't return message id in response to send request
+        # if SENDGRID_GENERATE_MESSAGE_ID = false then anymail won't
+        # generate custom id thus `provider_id` will be empty.
+        # Write message id from webhook payload `sg_message_id`.
+        if (
+            self.provider_id == ""
+            and isinstance(anymail_event.esp_event, dict)
+            and "sg_message_id" in anymail_event.esp_event
+        ):
+            self.provider_id = anymail_event.esp_event["sg_message_id"]
 
 
 def is_webhook_event_supported(anymail_event: TrackingEventProtocol) -> bool:

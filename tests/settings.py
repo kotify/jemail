@@ -1,3 +1,5 @@
+import django
+
 SECRET_KEY = "random"
 
 ALLOWED_HOSTS = ["*"]
@@ -33,3 +35,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "tests.urls"
+
+if django.VERSION >= (6, 1):
+    MAILERS = {"default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"}}

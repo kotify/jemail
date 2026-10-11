@@ -1,7 +1,11 @@
+import django
+import pytest
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 
 from jemail.models import EmailAttachment, EmailMessage, EmailRecipientKind
+
+from .backends import RecordingEmailBackend
 
 
 def test_create_minimal(db, mailoutbox, settings):
@@ -72,3 +76,18 @@ def test_create_with_objects(db, mailoutbox):
     assert msg.body == "Hi User,..."
     assert len(msg.alternatives) == 1
     assert msg.reply_to == ["Example Team <support@example.com>"]
+
+
+@pytest.mark.skipif(django.VERSION < (6, 1), reason="MAILERS were added in Django 6.1")
+def test_send_using_mailer(db, mailoutbox, settings):
+    settings.MAILERS = {
+        "default": {"BACKEND": "django.core.mail.backends.locmem.EmailBackend"},
+        "other": {"BACKEND": "tests.backends.RecordingEmailBackend"},
+    }
+    RecordingEmailBackend.sent.clear()
+    EmailMessage.objects.create_with_objects(to=["user@example.com"], subject="Subject")
+    msg = EmailMessage.objects.get().build_message()
+
+    assert msg.send(using="other") == 1
+    assert RecordingEmailBackend.sent == [msg]
+    assert mailoutbox == []

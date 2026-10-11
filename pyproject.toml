@@ -21,6 +21,7 @@ classifiers = [
     "Environment :: Web Environment",
     "Framework :: Django :: 5.2",
     "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -38,7 +39,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     # Match the newest supported Django release.
-    "django-stubs<6.1",
+    "django-stubs<6.2",
     "mypy",
     "pdbpp",
     "pre-commit",

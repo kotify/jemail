@@ -21,6 +21,7 @@ jobs:
         django-version:
           - "Django>=5.2,<6.0"
           - "Django>=6.0,<6.1"
+          - "Django>=6.1,<6.2"
     steps:
       - uses: actions/checkout@v6
       - name: Install uv and set the Python version

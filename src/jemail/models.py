@@ -161,8 +161,12 @@ class JemailMessage(AnymailMessageMixin, EmailMultiAlternatives):
         self.dbmessage = dbmessage
         super().__init__(**kwargs)
 
-    def send(self, fail_silently: bool = False) -> int:
-        result = super().send(fail_silently=fail_silently)
+    def send(self, fail_silently: bool = False, *, using: str | None = None) -> int:
+        # Django < 6.1 doesn't accept `using`, so pass it only when selected.
+        if using is None:
+            result = super().send(fail_silently=fail_silently)
+        else:
+            result = super().send(fail_silently=fail_silently, using=using)
         if result == 0 and fail_silently is True:
             return result
         recipients = {r.address: r for r in self.dbmessage.recipients.all()}

@@ -2,6 +2,9 @@
 
 ### Unreleased
 
+- Support Django 6.1
+- Add `using` to `JemailMessage.send()` to select a Django 6.1 mailer
+
 ### 0.1b2
 
 - Type `EmailMessage.recipients` as a related manager

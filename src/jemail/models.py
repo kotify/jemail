@@ -22,6 +22,8 @@ from . import settings
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from django.db.models.fields.related_descriptors import RelatedManager
+
 logger = logging.getLogger(__name__)
 jemail_message_status_update = django.dispatch.Signal()
 
@@ -37,7 +39,7 @@ class TrackingEventProtocol(Protocol):
     timestamp: Any
     event_type: Any  # EventType
     metadata: dict[str, Any]
-    esp_event: None | object
+    esp_event: object | None
 
 
 class EmailAttachment(models.Model):
@@ -191,7 +193,7 @@ class MailboxField(models.EmailField):
 
 
 class EmailMessage(models.Model):
-    recipients: models.Manager[EmailRecipient]
+    recipients: RelatedManager[EmailRecipient]
 
     created_at = models.DateTimeField(_("created at"), auto_now=True, editable=False)
     created_by = models.ForeignKey(

@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+- Type `EmailMessage.recipients` as a related manager
+
 ### 0.1b1
 
 - Drop support for Python 3.9-3.11

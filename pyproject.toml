@@ -24,8 +24,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -81,7 +79,7 @@ select = [
   'RUF',
   'INP',
   'I',
-  'TCH',
+  'TC',
 ]
 ignore = [
   'E501',
@@ -89,7 +87,7 @@ ignore = [
   'B905',
   'RUF012',
 ]
-extend-safe-fixes = ["TCH"]
+extend-safe-fixes = ["TC"]
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --cov=jemail --cov-branch --ds=tests.settings"
